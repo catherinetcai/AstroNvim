@@ -4,7 +4,8 @@ local user_plugin_opts = astronvim.user_plugin_opts
 local conditional_func = astronvim.conditional_func
 
 local function lsp_highlight_document(client)
-  if client.resolved_capabilities.document_highlight then
+  -- TODO
+  if client.server_capabilities.document_highlight then
     vim.api.nvim_create_augroup("lsp_document_highlight", { clear = true })
     vim.api.nvim_create_autocmd("CursorHold", {
       group = "lsp_document_highlight",
@@ -63,6 +64,11 @@ astronvim.lsp.on_attach = function(client, bufnr)
     vim.lsp.buf.formatting()
   end, { desc = "Format file with LSP" })
 
+  if client.name == "tsserver" or client.name == "jsonls" or client.name == "html" or client.name == "sumneko_lua" then
+    -- TODO:
+    client.server_capabilities.document_formatting = false
+  end
+
   local on_attach_override = user_plugin_opts("lsp.on_attach", nil, false)
   local aerial_avail, aerial = pcall(require, "aerial")
   conditional_func(on_attach_override, true, client, bufnr)
@@ -102,7 +108,7 @@ function astronvim.lsp.server_settings(server_name)
 end
 
 function astronvim.lsp.disable_formatting(client)
-  client.resolved_capabilities.document_formatting = false
+  client.server_capabilities.document_formatting = false
 end
 
 return astronvim.lsp
