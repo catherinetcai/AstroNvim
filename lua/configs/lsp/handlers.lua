@@ -2,7 +2,35 @@ astronvim.lsp = {}
 local user_plugin_opts = astronvim.user_plugin_opts
 local conditional_func = astronvim.conditional_func
 
-local function lsp_document_highlight(client)
+astronvim.lsp.on_attach = function(client, bufnr)
+  astronvim.set_mappings(
+    user_plugin_opts("lsp.mappings", {
+      n = {
+        ["K"] = { function() vim.lsp.buf.hover() end, desc = "Hover symbol details" },
+        ["<leader>la"] = { function() vim.lsp.buf.code_action() end, desc = "LSP code action" },
+        ["<leader>lf"] = { function() vim.lsp.buf.formatting_sync() end, desc = "Format code" },
+        ["<leader>lh"] = { function() vim.lsp.buf.signature_help() end, desc = "Signature help" },
+        ["<leader>lr"] = { function() vim.lsp.buf.rename() end, desc = "Rename current symbol" },
+        ["gD"] = { function() vim.lsp.buf.declaration() end, desc = "Declaration of current symbol" },
+        ["gI"] = { function() vim.lsp.buf.implementation() end, desc = "Implementation of current symbol" },
+        ["gd"] = { function() vim.lsp.buf.definition() end, desc = "Show the definition of current symbol" },
+        ["gr"] = { function() vim.lsp.buf.references() end, desc = "References of current symbol" },
+        ["<leader>ld"] = { function() vim.diagnostic.open_float() end, desc = "Hover diagnostics" },
+        ["[d"] = { function() vim.diagnostic.goto_prev() end, desc = "Previous diagnostic" },
+        ["]d"] = { function() vim.diagnostic.goto_next() end, desc = "Next diagnostic" },
+        ["gl"] = { function() vim.diagnostic.open_float() end, desc = "Hover diagnostics" },
+      },
+    }),
+    { buffer = bufnr }
+  )
+
+  vim.api.nvim_buf_create_user_command(
+    bufnr,
+    "Format",
+    function() vim.lsp.buf.formatting() end,
+    { desc = "Format file with LSP" }
+  )
+
   if client.server_capabilities.document_highlight then
     vim.api.nvim_create_augroup("lsp_document_highlight", { clear = true })
     vim.api.nvim_create_autocmd("CursorHold", {
@@ -16,61 +44,9 @@ local function lsp_document_highlight(client)
       callback = vim.lsp.buf.clear_references,
     })
   end
-end
-
-astronvim.lsp.on_attach = function(client, bufnr)
-  map("n", "K", function()
-    vim.lsp.buf.hover()
-  end, { desc = "Hover symbol details", buffer = bufnr })
-  map("n", "<leader>la", function()
-    vim.lsp.buf.code_action()
-  end, { desc = "LSP code action", buffer = bufnr })
-  map("n", "<leader>lf", function()
-    vim.lsp.buf.formatting_sync()
-  end, { desc = "Format code", buffer = bufnr })
-  map("n", "<leader>lh", function()
-    vim.lsp.buf.signature_help()
-  end, { desc = "Signature help", buffer = bufnr })
-  map("n", "<leader>lr", function()
-    vim.lsp.buf.rename()
-  end, { desc = "Rename current symbol", buffer = bufnr })
-  map("n", "gD", function()
-    vim.lsp.buf.declaration()
-  end, { desc = "Declaration of current symbol", buffer = bufnr })
-  map("n", "gI", function()
-    vim.lsp.buf.implementation()
-  end, { desc = "Implementation of current symbol", buffer = bufnr })
-  map("n", "gd", function()
-    vim.lsp.buf.definition()
-  end, { desc = "Show the definition of current symbol", buffer = bufnr })
-  map("n", "gr", function()
-    vim.lsp.buf.references()
-  end, { desc = "References of current symbol", buffer = bufnr })
-  map("n", "<leader>ld", function()
-    vim.diagnostic.open_float()
-  end, { desc = "Hover diagnostics", buffer = bufnr })
-  map("n", "[d", function()
-    vim.diagnostic.goto_prev()
-  end, { desc = "Previous diagnostic", buffer = bufnr })
-  map("n", "]d", function()
-    vim.diagnostic.goto_next()
-  end, { desc = "Next diagnostic", buffer = bufnr })
-  map("n", "gl", function()
-    vim.diagnostic.open_float()
-  end, { desc = "Hover diagnostics", buffer = bufnr })
-  vim.api.nvim_buf_create_user_command(bufnr, "Format", function()
-    vim.lsp.buf.formatting()
-  end, { desc = "Format file with LSP" })
 
   if client.name == "tsserver" or client.name == "jsonls" or client.name == "html" or client.name == "sumneko_lua" then
     client.server_capabilities.document_formatting = false
-
-  local on_attach_override = user_plugin_opts("lsp.on_attach", nil, false)
-  local aerial_avail, aerial = pcall(require, "aerial")
-  conditional_func(on_attach_override, true, client, bufnr)
-  conditional_func(aerial.on_attach, aerial_avail, client, bufnr)
-  lsp_highlight_document(client)
-  end
 
   local on_attach_override = user_plugin_opts("lsp.on_attach", nil, false)
   local aerial_avail, aerial = pcall(require, "aerial")
